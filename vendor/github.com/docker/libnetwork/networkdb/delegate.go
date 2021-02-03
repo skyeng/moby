@@ -167,8 +167,10 @@ func (nDB *NetworkDB) handleTableEvent(tEvent *TableEvent, isBulkSync bool) bool
 	}
 
 	nDB.Lock()
+	var entryPresent bool
 	e, err := nDB.getEntry(tEvent.TableName, tEvent.NetworkID, tEvent.Key)
 	if err == nil {
+		entryPresent = true
 		// We have the latest state. Ignore the event
 		// since it is stale.
 		if e.ltime >= tEvent.LTime {
@@ -221,10 +223,19 @@ func (nDB *NetworkDB) handleTableEvent(tEvent *TableEvent, isBulkSync bool) bool
 	var op opType
 	switch tEvent.Type {
 	case TableEventTypeCreate:
-		op = opCreate
+		// Broadcast UPDATE event instead of CREATE if the entry already existed in networkdb
+		if entryPresent {
+			logrus.Warnf("networkdb: CREATE->UPDATE nid=%s, eid=%s", tEvent.NetworkID, tEvent.Key)
+			op = opUpdate
+		} else {
+			logrus.Infof("networkdb: CREATE nid=%s, eid=%s", tEvent.NetworkID, tEvent.Key)
+			op = opCreate
+		}
 	case TableEventTypeUpdate:
+		logrus.Infof("networkdb: UPDATE nid=%s, eid=%s", tEvent.NetworkID, tEvent.Key)
 		op = opUpdate
 	case TableEventTypeDelete:
+		logrus.Infof("networkdb: DELETE nid=%s, eid=%s", tEvent.NetworkID, tEvent.Key)
 		op = opDelete
 	}
 
