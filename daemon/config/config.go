@@ -38,6 +38,8 @@ const (
 	DefaultShmSize = int64(67108864)
 	// DefaultNetworkMtu is the default value for network MTU
 	DefaultNetworkMtu = 1500
+
+	DefaultNetworkGossipNodes = 3
 	// DisableNetworkBridge is the default value of the option to disable network bridge
 	DisableNetworkBridge = "none"
 	// DefaultInitBinary is the name of the default init binary
@@ -98,6 +100,8 @@ type NetworkConfig struct {
 	DefaultAddressPools opts.PoolsOpt `json:"default-address-pools,omitempty"`
 	// NetworkControlPlaneMTU allows to specify the control plane MTU, this will allow to optimize the network use in some components
 	NetworkControlPlaneMTU int `json:"network-control-plane-mtu,omitempty"`
+
+	NetworkGossipNodes int `json:"network-gossip-nodes,omitempty"`
 }
 
 // CommonTLSOptions defines TLS configuration for the daemon server.

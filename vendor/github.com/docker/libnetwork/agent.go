@@ -53,6 +53,13 @@ func (a *agent) dataPathAddress() string {
 	return a.advertiseAddr
 }
 
+func (a *agent) getNetworkDB() *networkdb.NetworkDB {
+	a.Lock()
+	defer a.Unlock()
+	return a.networkDB
+}
+
+
 const libnetworkEPTable = "endpoint_table"
 
 func getBindAddr(ifaceName string) (string, error) {
@@ -222,8 +229,8 @@ func (c *controller) agentSetup(clusterProvider cluster.Provider) error {
 	listen := clusterProvider.GetListenAddress()
 	listenAddr, _, _ := net.SplitHostPort(listen)
 
-	logrus.Infof("Initializing Libnetwork Agent Listen-Addr=%s Local-addr=%s Adv-addr=%s Data-addr=%s Remote-addr-list=%v MTU=%d",
-		listenAddr, bindAddr, advAddr, dataAddr, remoteAddrList, c.Config().Daemon.NetworkControlPlaneMTU)
+	logrus.Infof("Initializing Libnetwork Agent Listen-Addr=%s Local-addr=%s Adv-addr=%s Data-addr=%s Remote-addr-list=%v MTU=%d GossipNodes=%d",
+		listenAddr, bindAddr, advAddr, dataAddr, remoteAddrList, c.Config().Daemon.NetworkControlPlaneMTU, c.Config().Daemon.NetworkGossipNodes)
 	if advAddr != "" && agent == nil {
 		if err := c.agentInit(listenAddr, bindAddr, advAddr, dataAddr); err != nil {
 			logrus.Errorf("error in agentInit: %v", err)
@@ -302,6 +309,11 @@ func (c *controller) agentInit(listenAddr, bindAddrOrInterface, advertiseAddr, d
 		logrus.Debugf("Control plane MTU: %d will initialize NetworkDB with: %d",
 			c.Config().Daemon.NetworkControlPlaneMTU, netDBConf.PacketBufferSize)
 	}
+	if c.Config().Daemon.NetworkGossipNodes > 1 {
+		netDBConf.GossipNodes = c.Config().Daemon.NetworkGossipNodes
+		logrus.Debugf("Set GossipNodes setup from daemon config: %d", netDBConf.GossipNodes)
+	}
+
 	nDB, err := networkdb.New(netDBConf)
 	if err != nil {
 		return err

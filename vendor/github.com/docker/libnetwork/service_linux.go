@@ -211,11 +211,13 @@ func (n *network) rmLBBackend(ip net.IP, lb *loadBalancer, rmService bool, fullR
 	}
 
 	if fullRemove {
+		logrus.Debugf("ipvs: DelDestination fwm=%d address=%s", s.FWMark, d.Address)
 		if err := i.DelDestination(s, d); err != nil && err != syscall.ENOENT {
 			logrus.Errorf("Failed to delete real server %s for vip %s fwmark %d in sbox %.7s (%.7s): %v", ip, lb.vip, lb.fwMark, sb.ID(), sb.ContainerID(), err)
 		}
 	} else {
 		d.Weight = 0
+		logrus.Debugf("ipvs: UpdateDestination fwm=%d address=%s", s.FWMark, d.Address)
 		if err := i.UpdateDestination(s, d); err != nil && err != syscall.ENOENT {
 			logrus.Errorf("Failed to set LB weight of real server %s to 0 for vip %s fwmark %d in sbox %.7s (%.7s): %v", ip, lb.vip, lb.fwMark, sb.ID(), sb.ContainerID(), err)
 		}

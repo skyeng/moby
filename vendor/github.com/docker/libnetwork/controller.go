@@ -142,6 +142,8 @@ type NetworkController interface {
 	StopDiagnostic()
 	// IsDiagnosticEnabled returns true if the diagnostic is enabled
 	IsDiagnosticEnabled() bool
+
+	ChangeNetworkGossipNodes(count int)
 }
 
 // NetworkWalker is a client provided function which will be used to walk the Networks.
@@ -1350,6 +1352,20 @@ func (c *controller) StartDiagnostic(port int) {
 		c.DiagnosticServer.EnableDiagnostic("127.0.0.1", port)
 	}
 	c.Unlock()
+}
+
+func (c *controller) ChangeNetworkGossipNodes(count int) {
+	logrus.Infof("ChangeNetworkGossipNodes: %d", count)
+	if (count > 1) {
+		if agent := c.getAgent(); agent != nil {
+			nDB := agent.getNetworkDB()
+			config := nDB.GetConfig()
+			if config.GossipNodes != count {
+				logrus.Infof("Change GossipNodes count %d -> %d", config.GossipNodes, count)
+				config.GossipNodes = count
+			}
+		}
+	}
 }
 
 // StopDiagnostic start the network dias mode

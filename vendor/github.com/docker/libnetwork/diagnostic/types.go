@@ -93,8 +93,16 @@ type PeerEntryObj struct {
 	IP    string `json:"ip"`
 }
 
+type GossipNodesCountObj struct {
+	Count    int `json:"count"`
+}
+
 func (p *PeerEntryObj) String() string {
 	return fmt.Sprintf("%d) %s -> %s\n", p.Index, p.Name, p.IP)
+}
+
+func (g *GossipNodesCountObj) String() string {
+	return fmt.Sprintf("GossipNodes: %d\n", g.Count)
 }
 
 // TableEntryObj network db table entry object

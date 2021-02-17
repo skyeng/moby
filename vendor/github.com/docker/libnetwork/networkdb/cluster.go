@@ -123,6 +123,11 @@ func (nDB *NetworkDB) clusterInit() error {
 	// duplicated by logrus
 	config.Logger = log.New(&logWriter{}, "", 0)
 
+	if nDB.config.GossipNodesMemberlist != 0 {
+		config.GossipNodes = nDB.config.GossipNodesMemberlist
+	}
+
+	logrus.Infof("libnetwork: GossipNodes %d", nDB.config.GossipNodes)
 	var err error
 	if len(nDB.config.Keys) > 0 {
 		for i, key := range nDB.config.Keys {
@@ -452,7 +457,7 @@ func (nDB *NetworkDB) gossip() {
 	}
 
 	for nid, nodes := range networkNodes {
-		mNodes := nDB.mRandomNodes(3, nodes)
+		mNodes := nDB.mRandomNodes(nDB.config.GossipNodes, nodes)
 		bytesAvail := nDB.config.PacketBufferSize - compoundHeaderOverhead
 
 		nDB.RLock()
@@ -477,10 +482,12 @@ func (nDB *NetworkDB) gossip() {
 		// Collect stats and print the queue info, note this code is here also to have a view of the queues empty
 		network.qMessagesSent += len(msgs)
 		if printStats {
-			logrus.Infof("NetworkDB stats %v(%v) - netID:%s leaving:%t netPeers:%d entries:%d Queue qLen:%d netMsg/s:%d",
+			logrus.Infof("NetworkDB stats %v(%v) - gossipNodes:%d, mGossipNodes:%d, netID:%s leaving:%t netPeers:%d entries:%d Messages processed:%d Output qLen:%d Input qLen:%d",
 				nDB.config.Hostname, nDB.config.NodeID,
-				nid, network.leaving, broadcastQ.NumNodes(), network.entriesNumber, broadcastQ.NumQueued(),
-				network.qMessagesSent/int((nDB.config.StatsPrintPeriod/time.Second)))
+				nDB.config.GossipNodes, nDB.config.GossipNodesMemberlist,
+				nid, network.leaving, broadcastQ.NumNodes(), network.entriesNumber,
+				network.qMessagesSent, broadcastQ.NumQueued(),
+				nDB.memberlist.QueueLen())
 			network.qMessagesSent = 0
 		}
 

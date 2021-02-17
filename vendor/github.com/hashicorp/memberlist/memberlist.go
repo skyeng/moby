@@ -34,6 +34,7 @@ type Memberlist struct {
 	sequenceNum uint32 // Local sequence number
 	incarnation uint32 // Local incarnation number
 	numNodes    uint32 // Number of known nodes (estimate)
+	QueueLen func() int
 
 	config         *Config
 	shutdown       int32 // Used as an atomic boolean value
@@ -175,9 +176,15 @@ func newMemberlist(conf *Config) (*Memberlist, error) {
 	m.broadcasts.NumNodes = func() int {
 		return m.estNumNodes()
 	}
+	m.QueueLen = func() int {
+		return len(m.handoff)
+	}
 	go m.streamListen()
 	go m.packetListen()
 	go m.packetHandler()
+
+	m.logger.Printf("memberlist: GossipNodes %d", m.config.GossipNodes)
+
 	return m, nil
 }
 

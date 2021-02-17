@@ -65,6 +65,10 @@ func (daemon *Daemon) Reload(conf *config.Config) (err error) {
 	if err := daemon.reloadLiveRestore(conf, attributes); err != nil {
 		return err
 	}
+	if err := daemon.reloadNetworkGossipNodes(conf, attributes); err != nil {
+		return err
+	}
+
 	return daemon.reloadNetworkDiagnosticPort(conf, attributes)
 }
 
@@ -322,6 +326,17 @@ func (daemon *Daemon) reloadNetworkDiagnosticPort(conf *config.Config, attribute
 	logrus.WithFields(logrus.Fields{"port": conf.NetworkDiagnosticPort, "ip": "127.0.0.1"}).Warn("Starting network diagnostic server")
 	daemon.netController.StartDiagnostic(conf.NetworkDiagnosticPort)
 
+	return nil
+}
+
+func (daemon *Daemon) reloadNetworkGossipNodes(conf *config.Config, attributes map[string]string) error {
+	if conf == nil || daemon.netController == nil || !conf.IsValueSet("network-gossip-nodes") || conf.NetworkGossipNodes < 1 {
+		logrus.WithFields(logrus.Fields{"count": config.DefaultNetworkGossipNodes}).Warn("Reload GossipNodes count to default")
+		daemon.netController.ChangeNetworkGossipNodes(config.DefaultNetworkGossipNodes)
+		return nil
+	}
+	logrus.WithFields(logrus.Fields{"count": conf.NetworkGossipNodes}).Warn("Reload GossipNodes count")
+	daemon.netController.ChangeNetworkGossipNodes(conf.NetworkGossipNodes)
 	return nil
 }
 

@@ -1412,6 +1412,8 @@ func (daemon *Daemon) networkOptions(dconfig *config.Config, pg plugingetter.Plu
 
 	options = append(options, nwconfig.OptionNetworkControlPlaneMTU(dconfig.NetworkControlPlaneMTU))
 
+	options = append(options, nwconfig.OptionNetworkGossipNodes(dconfig.NetworkGossipNodes))
+
 	return options, nil
 }
 

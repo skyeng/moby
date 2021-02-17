@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"strconv"
 
 	"github.com/docker/libnetwork/diagnostic"
 	"github.com/docker/libnetwork/internal/caller"
@@ -29,6 +30,44 @@ var NetDbPaths2Func = map[string]diagnostic.HTTPHandlerFunc{
 	"/getentry":     dbGetEntry,
 	"/gettable":     dbGetTable,
 	"/networkstats": dbNetworkStats,
+	"/gossipnodes": dbGossipNodesCount,
+}
+
+func dbGossipNodesCount(ctx interface{}, w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	diagnostic.DebugHTTPForm(r)
+	_, json := diagnostic.ParseHTTPFormOptions(r)
+
+	// audit logs
+	log := logrus.WithFields(logrus.Fields{"component": "diagnostic", "remoteIP": r.RemoteAddr, "method": caller.Name(0), "url": r.URL.String()})
+	log.Info("dbGossipNodesCount diagnostic")
+
+	nDB, ok := ctx.(*NetworkDB)
+	if ok {
+		if len(r.Form["count"]) > 1 {
+			rsp := diagnostic.WrongCommand(missingParameter, fmt.Sprintf("%s?count=int ( int > 0 )", r.URL.Path))
+			diagnostic.HTTPReply(w, rsp, json)
+			return
+		}
+
+		if len(r.Form["count"]) == 1 {
+			newValue, err := strconv.Atoi(r.Form["count"][0])
+			if err != nil || newValue < 1 {
+				rsp := diagnostic.WrongCommand(missingParameter, fmt.Sprintf("%s?count=int ( int > 0 )", r.URL.Path))
+				diagnostic.HTTPReply(w, rsp, json)
+				return
+			}
+			if nDB.config.GossipNodes != newValue {
+				oldValue := nDB.config.GossipNodes
+				nDB.config.GossipNodes = newValue
+				log.Info("GossipNodes count has been changed %d->%d", oldValue, newValue)
+			}
+		}
+		rsp := diagnostic.CommandSucceed(&diagnostic.GossipNodesCountObj{Count: nDB.config.GossipNodes})
+		diagnostic.HTTPReply(w, diagnostic.CommandSucceed(rsp), json)
+		return
+	}
+	diagnostic.HTTPReply(w, diagnostic.FailCommand(fmt.Errorf("%s", dbNotAvailable)), json)
 }
 
 func dbJoin(ctx interface{}, w http.ResponseWriter, r *http.Request) {

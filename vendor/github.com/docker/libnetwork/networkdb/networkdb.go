@@ -185,6 +185,9 @@ type Config struct {
 	// be able to increase this to get more content into each gossip packet.
 	PacketBufferSize int
 
+	GossipNodes int
+	GossipNodesMemberlist int
+
 	// reapEntryInterval duration of a deleted entry before being garbage collected
 	reapEntryInterval time.Duration
 
@@ -229,7 +232,9 @@ func DefaultConfig() *Config {
 		Hostname:          hostname,
 		BindAddr:          "0.0.0.0",
 		PacketBufferSize:  1400,
-		StatsPrintPeriod:  5 * time.Minute,
+		GossipNodes: 3,
+		GossipNodesMemberlist: 3,
+		StatsPrintPeriod:  30 * time.Second,
 		HealthPrintPeriod: 1 * time.Minute,
 		reapEntryInterval: 30 * time.Minute,
 	}
@@ -319,6 +324,10 @@ func (nDB *NetworkDB) Peers(nid string) []PeerInfo {
 		}
 	}
 	return peers
+}
+
+func (nDB *NetworkDB) GetConfig() *Config {
+	return nDB.config
 }
 
 // GetEntry retrieves the value of a table entry in a given (network,

@@ -42,6 +42,8 @@ type DaemonCfg struct {
 	DriverCfg              map[string]interface{}
 	ClusterProvider        cluster.Provider
 	NetworkControlPlaneMTU int
+	NetworkGossipNodes int
+	NetworkGossipNodesMemberlist int
 	DefaultAddressPool     []*ipamutils.NetworkToSplit
 }
 
@@ -252,6 +254,14 @@ func OptionNetworkControlPlaneMTU(exp int) Option {
 		c.Daemon.NetworkControlPlaneMTU = exp
 	}
 }
+
+func OptionNetworkGossipNodes(count int) Option {
+	return func(c *Config) {
+		logrus.Debugf("Config NetworkGossipNodes: %d", count)
+		c.Daemon.NetworkGossipNodes = count
+	}
+}
+
 
 // ProcessOptions processes options and stores it in config
 func (c *Config) ProcessOptions(options ...Option) {
