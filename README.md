@@ -6,8 +6,8 @@
 
 ## Ответственные
 
-- Code owner: Александр Прусов
-- Product owner: Артем Науменко
+- Code owner: [Александр Прусов](https://skyeng.slack.com/team/US1TGKY3F)
+- Product owner: [Артем Науменко](https://skyeng.slack.com/team/U9AGNCBC1)
 - Команда: Infra Ops
 
 The Moby Project
